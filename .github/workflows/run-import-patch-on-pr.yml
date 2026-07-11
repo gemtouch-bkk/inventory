@@ -1,0 +1,36 @@
+name: Run importer patch on pull request
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.head_ref == 'feature/excel-csv-import' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/excel-csv-import
+      - name: Execute embedded patch
+        shell: python
+        run: |
+          from pathlib import Path
+          import textwrap
+          workflow = Path('.github/workflows/apply-import-feature.yml').read_text(encoding='utf-8')
+          start = workflow.index('      - name: Patch index.html')
+          block_start = workflow.index('        run: |\n', start) + len('        run: |\n')
+          block_end = workflow.index('      - name: Commit feature', block_start)
+          code = textwrap.dedent(workflow[block_start:block_end])
+          exec(compile(code, 'apply-import-feature.yml', 'exec'))
+      - name: Commit patched app
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "feat: add Excel and CSV inventory import preview"
+          git push origin feature/excel-csv-import
