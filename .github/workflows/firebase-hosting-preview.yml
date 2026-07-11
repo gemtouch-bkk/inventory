@@ -1,12 +1,18 @@
 name: Deploy Firebase preview
 
 on:
-  push:
+  pull_request:
     branches:
-      - feature/excel-csv-import
+      - main
+
+permissions:
+  checks: write
+  contents: read
+  pull-requests: write
 
 jobs:
   preview:
+    if: github.head_ref == 'feature/excel-csv-import'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
