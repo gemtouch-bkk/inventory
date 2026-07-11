@@ -20,12 +20,12 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
-          import textwrap
           workflow = Path('.github/workflows/apply-import-feature.yml').read_text(encoding='utf-8')
           start = workflow.index('      - name: Patch index.html')
           block_start = workflow.index('        run: |\n', start) + len('        run: |\n')
           block_end = workflow.index('      - name: Commit feature', block_start)
-          code = textwrap.dedent(workflow[block_start:block_end])
+          lines = workflow[block_start:block_end].splitlines()
+          code = '\n'.join(line[10:] if line.startswith('          ') else line for line in lines)
           exec(compile(code, 'apply-import-feature.yml', 'exec'))
       - name: Commit patched app
         run: |
